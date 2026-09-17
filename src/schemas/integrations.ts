@@ -1,4 +1,4 @@
-import type { CreateGitHubIntegrationRequest } from '@usenotra/sdk/models/operations';
+import type { CreateGitHubIntegrationRequest } from '../types/api';
 import * as z from 'zod';
 import { parseApiRequest } from '../utils/parse-api-request';
 

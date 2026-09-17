@@ -2,7 +2,7 @@
 import { Glob } from 'bun';
 import { rm } from 'node:fs/promises';
 
-const PRESERVE = new Set(['run.js', 'dev.js']);
+const PRESERVE = new Set<string>();
 
 const dist = new Glob('**/*');
 for await (const entry of dist.scan({ cwd: 'dist' })) {
@@ -12,6 +12,7 @@ for await (const entry of dist.scan({ cwd: 'dist' })) {
 
 const sources = new Glob('commands/**/*.ts');
 const entrypoints: string[] = [];
+entrypoints.push(`${process.cwd()}/src/run.ts`);
 for await (const file of sources.scan({ cwd: 'src', absolute: true })) {
   if (file.endsWith('.test.ts') || file.endsWith('.spec.ts')) continue;
   entrypoints.push(file);

@@ -1,7 +1,4 @@
-import type {
-  CreatePostGenerationRequest,
-  UpdatePostRequest,
-} from '@usenotra/sdk/models/operations';
+import type { CreatePostGenerationRequest, UpdatePostBody } from '../types/api';
 import * as z from 'zod';
 import { CONTENT_TYPES, LOOKBACK_WINDOWS, POST_STATUSES } from '../constants/posts';
 import { parseApiRequest } from '../utils/parse-api-request';
@@ -87,6 +84,6 @@ export function validateCreatePostGenerationRequest(
   );
 }
 
-export function validateUpdatePostBody(input: unknown): UpdatePostRequest['body'] {
+export function validateUpdatePostBody(input: unknown): UpdatePostBody {
   return parseApiRequest(updatePostBodySchema, input, 'Invalid post update request');
 }

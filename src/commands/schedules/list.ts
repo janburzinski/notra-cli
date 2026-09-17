@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import type { ListSchedulesResponse } from '@usenotra/sdk/models/operations';
+import type { ListSchedulesResponse } from '../../types/api';
 import { NotraCommand } from '../../base-command';
 import { formatBool, formatDate, renderTable, truncate } from '../../utils/output';
 

@@ -1,7 +1,4 @@
-import type {
-  CreateScheduleRequest,
-  UpdateScheduleRequest,
-} from '@usenotra/sdk/models/operations';
+import type { ScheduleBody } from '../types/api';
 import * as z from 'zod';
 import { CONTENT_TYPES, LOOKBACK_WINDOWS } from '../constants/posts';
 import { PUBLISH_DESTINATIONS, SCHEDULE_FREQUENCIES } from '../constants/schedules';
@@ -67,10 +64,10 @@ const scheduleBodySchema = z
   })
   .strict();
 
-export function validateCreateScheduleRequest(input: unknown): CreateScheduleRequest {
+export function validateCreateScheduleRequest(input: unknown): ScheduleBody {
   return parseApiRequest(scheduleBodySchema, input, 'Invalid schedule create request');
 }
 
-export function validateUpdateScheduleBody(input: unknown): UpdateScheduleRequest['body'] {
+export function validateUpdateScheduleBody(input: unknown): ScheduleBody {
   return parseApiRequest(scheduleBodySchema, input, 'Invalid schedule update request');
 }

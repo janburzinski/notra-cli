@@ -1,7 +1,4 @@
-import type {
-  CreateBrandIdentityRequest,
-  UpdateBrandIdentityRequest,
-} from '@usenotra/sdk/models/operations';
+import type { CreateBrandIdentityRequest, UpdateBrandIdentityBody } from '../types/api';
 import * as z from 'zod';
 import { LANGUAGES, TONE_PROFILES } from '../constants/brands';
 import { parseApiRequest } from '../utils/parse-api-request';
@@ -44,7 +41,7 @@ export function validateCreateBrandIdentityRequest(
 
 export function validateUpdateBrandIdentityBody(
   input: unknown,
-): UpdateBrandIdentityRequest['body'] {
+): UpdateBrandIdentityBody {
   return parseApiRequest(
     updateBrandIdentityBodySchema,
     input,

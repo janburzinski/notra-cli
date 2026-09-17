@@ -33,6 +33,8 @@ notra schedules list
 notra geo projects list
 notra geo visibility overview <projectId> --days 30
 notra geo prompts create <projectId> --prompt "Which tools lead this category?"
+notra api operations --tag GEO
+notra api call getGeoSentiment --param projectId=project_123
 ```
 
 Run `notra <topic> --help` to see every command and flag. Every command
@@ -42,11 +44,63 @@ GEO commands cover projects, settings, prompts, sequences, competitors, scans,
 visibility, content gaps, briefs, agent readiness, and AI traffic. Run
 `notra geo --help` to browse the complete command tree.
 
+### Complete API access
+
+The curated commands above optimize common workflows. The `api` commands expose
+the complete public OpenAPI surface without a generated SDK:
+
+```bash
+# Browse every bundled operation
+notra api operations
+notra api operations --search feedback
+
+# Call an operation by operationId
+notra api call getPost --param postId=post_123
+notra api call createSkill --body-file ./skill.json
+
+# Direct escape hatch for newly deployed endpoints
+notra api request GET /v1/status
+notra api request GET /v1/posts --query limit=20 --query status=draft
+```
+
+Path, query, and header parameters use repeatable `--param NAME=VALUE` flags.
+Request bodies come from `--body-file`; use `-` to read JSON from stdin. The raw
+`api request` command remains available when an API deployment is newer than the
+catalog bundled with the installed CLI.
+
+## Agent and MCP parity
+
+The `tools` namespace mirrors the public Notra MCP tool names. It accepts the
+same flat JSON input shape, then routes path, query, and body fields using the
+bundled OpenAPI catalog:
+
+```bash
+notra tools list
+notra tools call list_posts --input '{"status":"draft","limit":10}'
+notra tools call get_post --input '{"postId":"post_123"}'
+echo '{"name":"writer"}' | notra tools call get_skill --input-file -
+```
+
+Use `--select` with `--raw` when an agent needs one value and no JSON envelope.
+This also covers Markdown without adding a lossy global Markdown renderer:
+
+```bash
+notra tools call get_post \
+  --input '{"postId":"post_123"}' \
+  --select post.markdown \
+  --raw
+```
+
+`create_geo_scan`, `run_geo_sequence`, and `plan_geo_content_brief` use AI
+credits and require `--yes`. The composite `get_geo_snapshot` tool remains MCP
+only; `notra tools list --json` reports that limitation explicitly.
+
 ## Output
 
 Commands default to formatted output in a terminal and JSON when stdout is
 redirected. Explicit output flags take precedence over that automatic choice;
 for example, `notra posts get <postId> --markdown` always prints Markdown.
+`--json` never adds tables, spinners, success text, or ANSI styling to stdout.
 
 `notra auth login --json` streams newline-delimited JSON (NDJSON), with one
 compact object per line. The `pending` event contains the verification URL and
@@ -93,10 +147,30 @@ notra config set base-url https://api.usenotra.com
 git clone https://github.com/usenotra/notra-cli && cd notra-cli
 bun install
 bun run dev -- posts list --help
+bun run openapi:sync http://localhost:3000/openapi.json
+bun run test
 bun run typecheck
 ```
 
-Source is TypeScript with extensionless imports (`moduleResolution: Bundler`).
-`bun run dev` runs commands through oclif's development mode. For distribution,
-`bun run build` bundles the command entrypoints into `dist`; `prepack` runs that
-build automatically, and the published package contains only `dist`.
+Source is TypeScript with extensionless imports (`moduleResolution: Bundler`). A
+small in-repo parser and dispatcher power the CLI; there is no generated SDK or
+CLI framework in the runtime dependency graph. `bun run dev` executes the source
+dispatcher. For distribution, `bun run build` bundles the command entrypoints
+into `dist`; `prepack` runs that build automatically, and the published package
+contains only `dist`.
+
+The parser infers required, optional, repeatable, enum, integer, and boolean
+types from each command definition. The shared HTTP client returns `unknown`
+unless a response decoder is supplied; curated commands use Zod response
+schemas, while generic `api` and `tools` calls deliberately pass unknown JSON
+through without pretending it has a compile-time type.
+
+Effect is intentionally not a runtime dependency. The API backend benefits from
+Effect services, typed domain errors, and schedules; this short-lived CLI mostly
+performs one request and exits. A local Effect v4 experiment increased an
+isolated bundled Bun startup from 2.61 ms to 6.92 ms. Effect remains a reasonable
+future choice for a genuinely complex retry or concurrent workflow, but it does
+not replace decoding untrusted OpenAPI responses.
+
+`bun run openapi:sync [URL]` refreshes the bundled operation catalog. It defaults
+to the production schema and accepts a local API server URL for development.

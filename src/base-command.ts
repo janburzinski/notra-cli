@@ -1,10 +1,9 @@
 import { Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
-import type { Notra } from '@usenotra/sdk';
 import { NOTRA_API_KEY_ENV_VAR, NOTRA_BASE_URL_ENV_VAR } from './constants/config';
-import { buildClient, resolveBearerToken } from './lib/client';
+import { buildClient, resolveBearerToken, type NotraClient } from './lib/client';
 import { getBaseUrl } from './lib/config';
-import { GeoClient } from './lib/geo-client';
+import { HttpClient } from './lib/http-client';
 import { ensureFreshAccessToken } from './lib/workos';
 import { renderJson, renderNdjson, sanitizeTerminalText } from './utils/output';
 import { toFriendlyError } from './utils/errors';
@@ -26,9 +25,9 @@ export abstract class NotraCommand extends Command {
     }),
   };
 
-  private _client?: Notra;
+  private _client?: NotraClient;
 
-  private _geoClient?: GeoClient;
+  private _apiClient?: HttpClient;
 
   protected requiresFreshAccessToken = true;
 
@@ -42,7 +41,7 @@ export abstract class NotraCommand extends Command {
     await ensureFreshAccessToken();
   }
 
-  protected client(): Notra {
+  protected client(): NotraClient {
     if (!this._client) {
       const overrides = readGlobalArgv();
       this._client = buildClient({
@@ -53,15 +52,20 @@ export abstract class NotraCommand extends Command {
     return this._client;
   }
 
-  protected geo(): GeoClient {
-    if (!this._geoClient) {
+  protected geo(): HttpClient {
+    return this.api();
+  }
+
+  protected api(): HttpClient {
+    if (!this._apiClient) {
       const overrides = readGlobalArgv();
-      this._geoClient = new GeoClient({
+      this._apiClient = new HttpClient({
         apiKey: resolveBearerToken(overrides),
         baseUrl: overrides.baseUrl ?? getBaseUrl(),
+        userAgent: `notra-cli/${process.env.npm_package_version ?? 'dev'}`,
       });
     }
-    return this._geoClient;
+    return this._apiClient;
   }
 
   protected emitJson(): boolean {
