@@ -1,4 +1,5 @@
-import type { OpenApiOperation, QueryValue } from './api';
+import type { QueryValue } from './http';
+import type { OpenApiOperation } from './openapi';
 
 export type ToolSafety = 'read' | 'write' | 'destructive' | 'billable';
 
@@ -8,6 +9,8 @@ export type ToolDefinition = {
   safety: ToolSafety;
   unavailableReason?: string;
 };
+
+export type ChatStreamResult = { chatId: string | null; text: string };
 
 export type PreparedToolRequest = {
   path: string;

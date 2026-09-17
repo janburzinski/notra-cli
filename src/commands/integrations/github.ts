@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import type { CreateGitHubIntegrationRequest } from '../../types/api';
+import type { CreateGitHubIntegrationRequest } from '../../types/integrations';
 import { NotraCommand } from '../../base-command';
 import { validateCreateGitHubIntegrationRequest } from '../../schemas/integrations';
 

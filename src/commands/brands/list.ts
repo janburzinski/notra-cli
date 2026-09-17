@@ -1,5 +1,5 @@
 import { NotraCommand } from '../../base-command';
-import type { BrandIdentity } from '../../types/api';
+import type { BrandIdentity } from '../../types/brand-identities';
 import { formatBool, formatDate, renderTable, truncate } from '../../utils/output';
 
 export default class BrandsList extends NotraCommand {

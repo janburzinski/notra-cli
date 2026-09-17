@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import type { ListPostsRequest, Post } from '../../types/api';
+import type { ListPostsRequest, Post } from '../../types/posts';
 import { NotraCommand } from '../../base-command';
 import { formatDate, renderTable, truncate } from '../../utils/output';
 

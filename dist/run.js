@@ -1,10 +1,13 @@
 #!/usr/bin/env bun
 // @bun
+import {
+  package_default
+} from "./chunk-rsjpv8jv.js";
 
 // src/run.ts
-import { existsSync } from "fs";
+import { existsSync as existsSync2 } from "fs";
 import { readdir } from "fs/promises";
-import { dirname, join, relative, resolve } from "path";
+import { dirname, join as join2, relative, resolve } from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 
 // src/cli/core.ts
@@ -22,20 +25,67 @@ var Errors;
   Errors.CLIError = CLIError;
 })(Errors ||= {});
 
+// src/constants/version.ts
+var VERSION = package_default.version;
+
+// src/utils/command-resolution.ts
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+var COMMAND_SEGMENT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+function resolveCommand(values, commandsRoot, extension) {
+  const candidates = commandCandidates(values);
+  for (let length = candidates.length;length > 0; length -= 1) {
+    const selected = candidates.slice(0, length);
+    if (selected.some(({ value }) => !COMMAND_SEGMENT.test(value)))
+      continue;
+    const parts = selected.map(({ value }) => value);
+    const file = join(commandsRoot, ...parts) + extension;
+    if (existsSync(file)) {
+      return {
+        file,
+        name: parts.join(" "),
+        commandIndices: selected.map(({ index }) => index)
+      };
+    }
+  }
+  return;
+}
+function isCommandTopic(topic) {
+  return topic === "" || topic.split(" ").every((segment) => COMMAND_SEGMENT.test(segment));
+}
+function commandCandidates(values) {
+  const candidates = [];
+  for (let index = 0;index < values.length; index += 1) {
+    const value = values[index];
+    if (!value)
+      continue;
+    if (value === "--api-key" || value === "--base-url") {
+      index += 1;
+      continue;
+    }
+    if (value === "--json" || value.startsWith("--api-key=") || value.startsWith("--base-url=")) {
+      continue;
+    }
+    if (!value.startsWith("-"))
+      candidates.push({ index, value });
+  }
+  return candidates;
+}
+
 // src/run.ts
 var root = dirname(fileURLToPath(import.meta.url));
-var commandsRoot = join(root, "commands");
+var commandsRoot = join2(root, "commands");
 var argv = process.argv.slice(2);
 if (argv.includes("--version") || argv.includes("-v")) {
-  console.log(process.env.npm_package_version ?? "0.1.0");
+  console.log(VERSION);
   process.exit(0);
 }
 var helpIndex = argv.findIndex((value) => value === "--help" || value === "-h");
 var lookup = helpIndex === -1 ? argv : argv.slice(0, helpIndex);
-var resolved = resolveCommand(lookup);
+var resolved = resolveCommand(lookup, commandsRoot, extension());
 if (!resolved) {
   const topic = lookup.filter((value) => !value.startsWith("-")).join(" ");
-  if (helpIndex !== -1 || lookup.length === 0 || topic && await hasTopic(topic)) {
+  if (lookup.length === 0 || helpIndex !== -1 && isCommandTopic(topic) && await hasTopic(topic)) {
     await printTopicHelp(topic);
     process.exit(0);
   }
@@ -61,10 +111,8 @@ if (helpIndex !== -1) {
   printCommandHelp(resolved.name, CommandClass);
   process.exit(0);
 }
-var commandArgv = [
-  ...argv.slice(0, resolved.start),
-  ...argv.slice(resolved.start + resolved.consumed)
-];
+var commandIndices = new Set(resolved.commandIndices);
+var commandArgv = argv.filter((_, index) => !commandIndices.has(index));
 var command = Reflect.construct(CommandClass, [commandArgv]);
 try {
   await command.init();
@@ -79,37 +127,13 @@ try {
     process.exit(exit);
   }
 }
-function resolveCommand(values) {
-  const start = leadingGlobalFlagLength(values);
-  const names = values.slice(start).filter((value) => !value.startsWith("-"));
-  for (let length = names.length;length > 0; length -= 1) {
-    const parts = names.slice(0, length);
-    const file = join(commandsRoot, ...parts) + extension();
-    if (existsSync(file))
-      return { file, name: parts.join(" "), start, consumed: length };
-  }
-  return;
-}
-function leadingGlobalFlagLength(values) {
-  let index = 0;
-  while (index < values.length) {
-    const value = values[index];
-    if (value === "--json")
-      index += 1;
-    else if (value === "--api-key" || value === "--base-url")
-      index += 2;
-    else if (value?.startsWith("--api-key=") || value?.startsWith("--base-url="))
-      index += 1;
-    else
-      break;
-  }
-  return index;
-}
 function extension() {
   return import.meta.url.endsWith(".ts") ? ".ts" : ".js";
 }
 async function hasTopic(topic) {
-  return existsSync(join(commandsRoot, ...topic.split(" ")));
+  if (!isCommandTopic(topic))
+    return false;
+  return existsSync2(join2(commandsRoot, ...topic.split(" ")));
 }
 async function printTopicHelp(topic) {
   const files = await commandFiles(commandsRoot);

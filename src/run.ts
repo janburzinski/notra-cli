@@ -5,23 +5,25 @@ import { readdir } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Command, Errors } from './cli/core';
+import { VERSION } from './constants/version';
+import { isCommandTopic, resolveCommand } from './utils/command-resolution';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const commandsRoot = join(root, 'commands');
 const argv = process.argv.slice(2);
 
 if (argv.includes('--version') || argv.includes('-v')) {
-  console.log(process.env.npm_package_version ?? '0.1.0');
+  console.log(VERSION);
   process.exit(0);
 }
 
 const helpIndex = argv.findIndex((value) => value === '--help' || value === '-h');
 const lookup = helpIndex === -1 ? argv : argv.slice(0, helpIndex);
-const resolved = resolveCommand(lookup);
+const resolved = resolveCommand(lookup, commandsRoot, extension());
 
 if (!resolved) {
   const topic = lookup.filter((value) => !value.startsWith('-')).join(' ');
-  if (helpIndex !== -1 || lookup.length === 0 || (topic && await hasTopic(topic))) {
+  if (lookup.length === 0 || (helpIndex !== -1 && isCommandTopic(topic) && await hasTopic(topic))) {
     await printTopicHelp(topic);
     process.exit(0);
   }
@@ -47,10 +49,8 @@ if (helpIndex !== -1) {
   process.exit(0);
 }
 
-const commandArgv = [
-  ...argv.slice(0, resolved.start),
-  ...argv.slice(resolved.start + resolved.consumed),
-];
+const commandIndices = new Set(resolved.commandIndices);
+const commandArgv = argv.filter((_, index) => !commandIndices.has(index));
 const command = Reflect.construct(CommandClass, [commandArgv]) as Command;
 try {
   await command.init();
@@ -66,39 +66,12 @@ try {
   }
 }
 
-function resolveCommand(values: ReadonlyArray<string>): {
-  file: string;
-  name: string;
-  start: number;
-  consumed: number;
-} | undefined {
-  const start = leadingGlobalFlagLength(values);
-  const names = values.slice(start).filter((value) => !value.startsWith('-'));
-  for (let length = names.length; length > 0; length -= 1) {
-    const parts = names.slice(0, length);
-    const file = join(commandsRoot, ...parts) + extension();
-    if (existsSync(file)) return { file, name: parts.join(' '), start, consumed: length };
-  }
-  return undefined;
-}
-
-function leadingGlobalFlagLength(values: ReadonlyArray<string>): number {
-  let index = 0;
-  while (index < values.length) {
-    const value = values[index];
-    if (value === '--json') index += 1;
-    else if (value === '--api-key' || value === '--base-url') index += 2;
-    else if (value?.startsWith('--api-key=') || value?.startsWith('--base-url=')) index += 1;
-    else break;
-  }
-  return index;
-}
-
-function extension(): string {
+function extension(): '.ts' | '.js' {
   return import.meta.url.endsWith('.ts') ? '.ts' : '.js';
 }
 
 async function hasTopic(topic: string): Promise<boolean> {
+  if (!isCommandTopic(topic)) return false;
   return existsSync(join(commandsRoot, ...topic.split(' ')));
 }
 

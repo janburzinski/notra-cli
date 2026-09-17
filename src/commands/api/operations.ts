@@ -2,8 +2,7 @@ import { Flags } from '@oclif/core';
 import { NotraCommand } from '../../base-command';
 import { OPENAPI_OPERATIONS } from '../../constants/openapi';
 import { renderTable } from '../../utils/output';
-
-type Operation = (typeof OPENAPI_OPERATIONS)[number];
+import type { OpenApiOperation } from '../../types/openapi';
 
 export default class ApiOperations extends NotraCommand {
   static override description = 'List every operation in the bundled Notra OpenAPI catalog.';
@@ -37,7 +36,7 @@ export default class ApiOperations extends NotraCommand {
       return;
     }
     this.log(
-      renderTable<Operation>(operations, {
+      renderTable<OpenApiOperation>(operations, {
         columns: [
           { header: 'Operation', get: (operation) => operation.id },
           { header: 'Method', get: (operation) => operation.method },

@@ -1,40 +1,61 @@
 import { NOTRA_API_KEY_ENV_VAR } from '../constants/config';
+import { VERSION } from '../constants/version';
 import {
   brandIdentityDeleteResponseSchema,
   brandIdentityGenerationCreatedResponseSchema,
   brandIdentityGenerationResponseSchema,
   brandIdentityListResponseSchema,
+  brandIdentityMutationResponseSchema,
   brandIdentityResponseSchema,
+} from '../schemas/brands';
+import {
   githubIntegrationResponseSchema,
   integrationDeleteResponseSchema,
   integrationsResponseSchema,
+} from '../schemas/integrations';
+import {
   listPostsResponseSchema,
   postDeleteResponseSchema,
   postGenerationCreatedResponseSchema,
   postGenerationResponseSchema,
   postMutationResponseSchema,
   postResponseSchema,
+} from '../schemas/posts';
+import {
   scheduleDeleteResponseSchema,
   scheduleResponseSchema,
   schedulesResponseSchema,
-} from '../schemas/api-responses';
+} from '../schemas/schedules';
 import type {
-  BrandIdentity,
+  BrandIdentityGenerationCreatedResponse,
+  BrandIdentityListResponse,
+  BrandIdentityMutationResponse,
+  BrandIdentityResponse,
   CreateBrandIdentityRequest,
-  CreateGitHubIntegrationRequest,
-  CreatePostGenerationRequest,
   GetBrandIdentityGenerationResponse,
+  UpdateBrandIdentityBody,
+} from '../types/brand-identities';
+import type { CascadingDeletionResponse, DeletionResponse } from '../types/common';
+import type {
+  CreateGitHubIntegrationRequest,
+  GitHubIntegrationResponse,
+  IntegrationsResponse,
+} from '../types/integrations';
+import type {
+  CreatePostGenerationRequest,
   GetPostGenerationResponse,
   ListPostsRequest,
   ListPostsResponse,
-  ListSchedulesResponse,
-  Organization,
-  Post,
-  Schedule,
-  ScheduleBody,
-  UpdateBrandIdentityBody,
+  PostGenerationCreatedResponse,
+  PostMutationResponse,
+  PostResponse,
   UpdatePostBody,
-} from '../types/api';
+} from '../types/posts';
+import type {
+  ListSchedulesResponse,
+  ScheduleBody,
+  ScheduleResponse,
+} from '../types/schedules';
 import type { ClientOverrides } from '../types/client';
 import { getApiKey, getBaseUrl, getStoredAuth } from './config';
 import { HttpClient } from './http-client';
@@ -67,7 +88,7 @@ export class NotraClient extends HttpClient {
   readonly schedules = new SchedulesClient(this);
 
   constructor(options: { apiKey?: string; baseUrl: string }) {
-    super({ ...options, userAgent: `notra-cli/${process.env.npm_package_version ?? 'dev'}` });
+    super({ ...options, userAgent: `notra-cli/${VERSION}` });
   }
 }
 
@@ -81,19 +102,22 @@ class ContentClient {
     });
   }
 
-  getPost(request: { postId: string }): Promise<{ organization: Organization; post: Post | null }> {
+  getPost(request: { postId: string }): Promise<PostResponse> {
     return this.http.request('GET', `/v1/posts/${segment(request.postId)}`, {
       decode: apiResponseDecoder(postResponseSchema, 'post'),
     });
   }
 
-  deletePost(request: { postId: string }): Promise<{ id: string; organization: Organization }> {
+  deletePost(request: { postId: string }): Promise<DeletionResponse> {
     return this.http.request('DELETE', `/v1/posts/${segment(request.postId)}`, {
       decode: apiResponseDecoder(postDeleteResponseSchema, 'post deletion response'),
     });
   }
 
-  async updatePost(request: { postId: string; body: UpdatePostBody }) {
+  async updatePost(request: { postId: string; body: UpdatePostBody }): Promise<{
+    headers: Record<string, string>;
+    result: PostMutationResponse;
+  }> {
     const result = await this.http.request(
       'PATCH',
       `/v1/posts/${segment(request.postId)}`,
@@ -105,7 +129,10 @@ class ContentClient {
     return { headers: {}, result };
   }
 
-  async createPostGeneration(request: CreatePostGenerationRequest) {
+  async createPostGeneration(request: CreatePostGenerationRequest): Promise<{
+    headers: Record<string, string>;
+    result: PostGenerationCreatedResponse;
+  }> {
     const result = await this.http.request('POST', '/v1/posts/generate', {
       body: request,
       decode: apiResponseDecoder(postGenerationCreatedResponseSchema, 'post generation job'),
@@ -119,16 +146,16 @@ class ContentClient {
     });
   }
 
-  listBrandIdentities(): Promise<{
-    organization: Organization;
-    brandIdentities: BrandIdentity[];
-  }> {
+  listBrandIdentities(): Promise<BrandIdentityListResponse> {
     return this.http.request('GET', '/v1/brand-identities', {
       decode: apiResponseDecoder(brandIdentityListResponseSchema, 'brand identity list'),
     });
   }
 
-  async createBrandIdentity(request: CreateBrandIdentityRequest) {
+  async createBrandIdentity(request: CreateBrandIdentityRequest): Promise<{
+    headers: Record<string, string>;
+    result: BrandIdentityGenerationCreatedResponse;
+  }> {
     const result = await this.http.request('POST', '/v1/brand-identities/generate', {
       body: request,
       decode: apiResponseDecoder(
@@ -152,18 +179,13 @@ class ContentClient {
 
   getBrandIdentity(request: {
     brandIdentityId: string;
-  }): Promise<{ organization: Organization; brandIdentity: BrandIdentity }> {
+  }): Promise<BrandIdentityResponse> {
     return this.http.request('GET', `/v1/brand-identities/${segment(request.brandIdentityId)}`, {
       decode: apiResponseDecoder(brandIdentityResponseSchema, 'brand identity'),
     });
   }
 
-  deleteBrandIdentity(request: { brandIdentityId: string }): Promise<{
-    id: string;
-    organization: Organization;
-    disabledSchedules: Array<{ id: string; name: string }>;
-    disabledEvents: Array<{ id: string; name: string }>;
-  }> {
+  deleteBrandIdentity(request: { brandIdentityId: string }): Promise<CascadingDeletionResponse> {
     return this.http.request('DELETE', `/v1/brand-identities/${segment(request.brandIdentityId)}`, {
       decode: apiResponseDecoder(brandIdentityDeleteResponseSchema, 'brand identity deletion response'),
     });
@@ -172,30 +194,23 @@ class ContentClient {
   updateBrandIdentity(request: {
     brandIdentityId: string;
     body: UpdateBrandIdentityBody;
-  }): Promise<{ organization: Organization; brandIdentity: BrandIdentity }> {
+  }): Promise<BrandIdentityMutationResponse> {
     return this.http.request('PATCH', `/v1/brand-identities/${segment(request.brandIdentityId)}`, {
       body: request.body,
-      decode: apiResponseDecoder(brandIdentityResponseSchema, 'updated brand identity'),
+      decode: apiResponseDecoder(brandIdentityMutationResponseSchema, 'updated brand identity'),
     });
   }
 
-  listIntegrations(): Promise<{
-    github: Array<{ id: string; displayName: string; owner?: string | null; repo?: string | null }>;
-    linear: Array<{
-      id: string;
-      displayName: string;
-      linearTeamName?: string | null;
-      linearOrganizationName?: string | null;
-    }>;
-    slack: unknown[];
-    organization: Organization;
-  }> {
+  listIntegrations(): Promise<IntegrationsResponse> {
     return this.http.request('GET', '/v1/integrations', {
       decode: apiResponseDecoder(integrationsResponseSchema, 'integration list'),
     });
   }
 
-  async createGitHubIntegration(request: CreateGitHubIntegrationRequest) {
+  async createGitHubIntegration(request: CreateGitHubIntegrationRequest): Promise<{
+    headers: Record<string, string>;
+    result: GitHubIntegrationResponse;
+  }> {
     const result = await this.http.request('POST', '/v1/integrations/github', {
       body: request,
       decode: apiResponseDecoder(githubIntegrationResponseSchema, 'GitHub integration'),
@@ -203,12 +218,7 @@ class ContentClient {
     return { headers: {}, result };
   }
 
-  deleteIntegration(request: { integrationId: string }): Promise<{
-    id: string;
-    organization: Organization;
-    disabledSchedules: Array<{ id: string; name: string }>;
-    disabledEvents: Array<{ id: string; name: string }>;
-  }> {
+  deleteIntegration(request: { integrationId: string }): Promise<CascadingDeletionResponse> {
     return this.http.request('DELETE', `/v1/integrations/${segment(request.integrationId)}`, {
       decode: apiResponseDecoder(integrationDeleteResponseSchema, 'integration deletion response'),
     });
@@ -225,14 +235,14 @@ class SchedulesClient {
     });
   }
 
-  createSchedule(body: ScheduleBody): Promise<{ schedule: Schedule; organization: Organization }> {
+  createSchedule(body: ScheduleBody): Promise<ScheduleResponse> {
     return this.http.request('POST', '/v1/schedules', {
       body,
       decode: apiResponseDecoder(scheduleResponseSchema, 'schedule'),
     });
   }
 
-  deleteSchedule(request: { scheduleId: string }): Promise<{ id: string; organization: Organization }> {
+  deleteSchedule(request: { scheduleId: string }): Promise<DeletionResponse> {
     return this.http.request('DELETE', `/v1/schedules/${segment(request.scheduleId)}`, {
       decode: apiResponseDecoder(scheduleDeleteResponseSchema, 'schedule deletion response'),
     });
@@ -241,7 +251,7 @@ class SchedulesClient {
   updateSchedule(request: {
     scheduleId: string;
     body: ScheduleBody;
-  }): Promise<{ schedule: Schedule; organization: Organization }> {
+  }): Promise<ScheduleResponse> {
     return this.http.request('PATCH', `/v1/schedules/${segment(request.scheduleId)}`, {
       body: request.body,
       decode: apiResponseDecoder(scheduleResponseSchema, 'updated schedule'),

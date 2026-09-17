@@ -2,8 +2,7 @@ import { Flags } from '@oclif/core';
 import { NotraCommand } from '../../base-command';
 import { MCP_TOOLS } from '../../constants/tools';
 import { renderTable } from '../../utils/output';
-
-type Tool = (typeof MCP_TOOLS)[number];
+import type { ToolDefinition } from '../../types/tools';
 
 export default class ToolsList extends NotraCommand {
   static override description = 'List CLI calls that mirror Notra MCP tool names.';
@@ -37,7 +36,7 @@ export default class ToolsList extends NotraCommand {
       return;
     }
 
-    this.log(renderTable<Tool>(tools, {
+    this.log(renderTable<ToolDefinition>(tools, {
       columns: [
         { header: 'Tool', get: (tool) => tool.name },
         { header: 'Safety', get: (tool) => tool.safety },

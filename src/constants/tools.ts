@@ -97,6 +97,29 @@ const BILLABLE_TOOLS = new Set([
   'run_geo_sequence',
 ]);
 
+// Mirrors the MCP server's destructiveHint annotations. These include updates because
+// they mutate persisted state, even when the operation is reversible in the product UI.
+const DESTRUCTIVE_TOOLS = new Set([
+  'delete_brand_identity',
+  'delete_geo_competitor',
+  'delete_geo_prompt',
+  'delete_geo_sequence',
+  'delete_integration',
+  'delete_post',
+  'delete_project',
+  'delete_schedule',
+  'delete_skill',
+  'rotate_geo_ingest_token',
+  'update_brand_identity',
+  'update_geo_prompt',
+  'update_geo_sequence',
+  'update_geo_settings',
+  'update_post',
+  'update_project',
+  'update_schedule',
+  'update_skill',
+]);
+
 const operationsById = new Map<string, (typeof OPENAPI_OPERATIONS)[number]>(
   OPENAPI_OPERATIONS.map((operation) => [operation.id, operation]),
 );
@@ -121,7 +144,7 @@ export function findMcpTool(name: string): ToolDefinition | undefined {
 
 function safetyFor(name: string, method: string | undefined): ToolSafety {
   if (BILLABLE_TOOLS.has(name)) return 'billable';
-  if (name.startsWith('delete_') || name === 'rotate_geo_ingest_token') return 'destructive';
+  if (DESTRUCTIVE_TOOLS.has(name)) return 'destructive';
   if (method === 'GET' || name === 'get_geo_snapshot') return 'read';
   return 'write';
 }

@@ -11,10 +11,10 @@ function operation(id: string) {
 describe('MCP-style tool requests', () => {
   test('splits path, query, and body fields', () => {
     expect(prepareToolRequest('update_post', operation('updatePost'), {
-      postId: 'post/123',
+      postId: 'post_123',
       title: 'New title',
     })).toEqual({
-      path: '/v1/posts/post%2F123',
+      path: '/v1/posts/post_123',
       query: {},
       headers: {},
       body: { title: 'New title' },
@@ -47,6 +47,23 @@ describe('MCP-style tool requests', () => {
     })).toThrow('Unknown input field(s): typo');
   });
 
+  test('validates query and body input against bundled OpenAPI schemas', () => {
+    expect(() => prepareToolRequest('list_posts', operation('listPosts'), {
+      limit: 'many',
+    })).toThrow('limit must be integer');
+    expect(() => prepareToolRequest('update_post', operation('updatePost'), {
+      postId: 'post_123',
+      status: 'sideways',
+    })).toThrow('input.status must be one of: draft, published');
+    expect(() => prepareToolRequest('update_post', operation('updatePost'), {
+      postId: 'post_123',
+      garbage: true,
+    })).toThrow('Unknown input field: input.garbage');
+    expect(prepareToolRequest('list_schedules', operation('listSchedules'), {
+      repositoryIds: ['repo_1', 'repo_2'],
+    }).query.repositoryIds).toEqual(['repo_1', 'repo_2']);
+  });
+
   test('projects chat SSE and selects raw-friendly fields', () => {
     const response = projectToolResult(
       'create_chat',
@@ -56,5 +73,24 @@ describe('MCP-style tool requests', () => {
     );
     expect(response).toEqual({ chatId: 'chat_1', text: 'Hello world' });
     expect(selectOutput({ post: { markdown: '# Hello' } }, 'post.markdown')).toBe('# Hello');
+  });
+
+  test('uses the chat response header when SSE metadata omits the chat ID', () => {
+    expect(projectToolResult(
+      'create_chat',
+      'data: {"type":"text-delta","delta":"Hello"}\n',
+      {},
+      'chat_header',
+    )).toEqual({ chatId: 'chat_header', text: 'Hello' });
+  });
+
+  test('treats null MCP resources as not found', () => {
+    expect(() => projectToolResult('get_post', { post: null }, { postId: 'post_404' }))
+      .toThrow('Post post_404 not found.');
+    expect(() => projectToolResult(
+      'get_brand_identity',
+      { brandIdentity: null },
+      { brandIdentityId: 'brand_404' },
+    )).toThrow('Brand identity brand_404 not found.');
   });
 });

@@ -34,7 +34,7 @@
     "build": "bun ./scripts/build.ts",
     "openapi:sync": "bun ./scripts/sync-openapi.ts",
     "typecheck": "tsc --noEmit",
-    "test": "bun test src/cli/core.test.ts src/lib/http-client.test.ts src/constants/openapi.test.ts src/utils/tool-request.test.ts src/schemas/api-responses.test.ts",
+    "test": "bun test src",
     "prepack": "bun run build",
     "snapshot:run": "bun ./snapshot/run.ts",
     "snapshot:serve": "bun ./snapshot/serve.ts"

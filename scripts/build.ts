@@ -2,11 +2,8 @@
 import { Glob } from 'bun';
 import { rm } from 'node:fs/promises';
 
-const PRESERVE = new Set<string>();
-
 const dist = new Glob('**/*');
 for await (const entry of dist.scan({ cwd: 'dist' })) {
-  if (PRESERVE.has(entry)) continue;
   await rm(`dist/${entry}`, { recursive: true, force: true });
 }
 

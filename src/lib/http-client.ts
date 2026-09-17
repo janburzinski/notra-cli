@@ -2,9 +2,10 @@ import type {
   ApiClientOptions,
   ApiHttpMethod,
   ApiRequestOptions,
+  ApiResponse,
   DecodedApiRequestOptions,
   QueryValue,
-} from '../types/api';
+} from '../types/http';
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 
@@ -47,6 +48,15 @@ export class HttpClient {
     path: string,
     options: ApiRequestOptions & { decode?: (value: unknown) => unknown } = {},
   ): Promise<unknown> {
+    const response = await this.requestWithMetadata(method, path, options);
+    return options.decode ? options.decode(response.data) : response.data;
+  }
+
+  async requestWithMetadata(
+    method: ApiHttpMethod,
+    path: string,
+    options: ApiRequestOptions = {},
+  ): Promise<ApiResponse<unknown>> {
     const baseUrl = new URL(`${this.options.baseUrl.replace(/\/$/, '')}/`);
     const url = new URL(path.replace(/^\/+/, ''), baseUrl);
     if (url.origin !== baseUrl.origin) {
@@ -84,7 +94,7 @@ export class HttpClient {
         response.headers.get('retry-after') ?? undefined,
       );
     }
-    return options.decode ? options.decode(payload) : payload;
+    return { data: payload, headers: response.headers };
   }
 }
 
@@ -92,7 +102,7 @@ function appendQuery(url: URL, query: ApiRequestOptions['query']): void {
   for (const [key, value] of Object.entries(query ?? {})) {
     if (value === undefined) continue;
     if (Array.isArray(value)) {
-      for (const item of value) url.searchParams.append(key, String(item));
+      url.searchParams.set(key, value.map(String).join(','));
       continue;
     }
     url.searchParams.set(key, String(value as Exclude<QueryValue, ReadonlyArray<unknown>>));

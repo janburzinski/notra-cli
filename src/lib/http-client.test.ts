@@ -28,7 +28,7 @@ describe('HttpClient', () => {
 
   test('sends auth, query parameters, and JSON bodies', async () => {
     const response = await client.request('POST', '/items', {
-      query: { limit: 3 },
+      query: { limit: 3, repositoryIds: ['repo_1', 'repo_2'] },
       body: { name: 'test' },
       decode: z.object({
         method: z.string(),
@@ -41,7 +41,7 @@ describe('HttpClient', () => {
     expect(response).toEqual({
       method: 'POST',
       authorization: 'Bearer secret',
-      query: { limit: '3' },
+      query: { limit: '3', repositoryIds: 'repo_1,repo_2' },
       body: { name: 'test' },
     });
   });

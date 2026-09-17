@@ -1,5 +1,6 @@
 import { MissingApiKeyError } from '../lib/client';
 import { ApiConnectionError, ApiError } from '../lib/http-client';
+import { ToolResourceNotFoundError } from '../lib/tool-errors';
 import {
   DeviceAuthorizationError,
   SessionExpiredError,
@@ -23,9 +24,10 @@ export function toFriendlyError(err: unknown): FriendlyError {
   }
 
   if (err instanceof ApiError) {
+    const status = err.code ? `HTTP ${err.statusCode} (${err.code})` : `HTTP ${err.statusCode}`;
     return {
       message: err.message,
-      detail: err.code ? `HTTP ${err.statusCode} (${err.code})` : `HTTP ${err.statusCode}`,
+      detail: err.retryAfter ? `${status}; retry after ${err.retryAfter}` : status,
       exitCode: mapStatus(err.statusCode),
     };
   }
@@ -36,6 +38,10 @@ export function toFriendlyError(err: unknown): FriendlyError {
       detail: String(err.cause ?? err.message),
       exitCode: ExitCode.Network,
     };
+  }
+
+  if (err instanceof ToolResourceNotFoundError) {
+    return { message: err.message, exitCode: ExitCode.NotFound };
   }
 
   if (err instanceof ApiResponseDecodeError) {

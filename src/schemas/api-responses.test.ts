@@ -1,9 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 import {
   brandIdentityDeleteResponseSchema,
+  brandIdentityMutationResponseSchema,
+  brandIdentityResponseSchema,
+} from './brands';
+import {
   listPostsResponseSchema,
   postDeleteResponseSchema,
-} from './api-responses';
+} from './posts';
 
 const organization = { id: 'org_1', slug: 'notra', name: 'Notra', logo: null };
 
@@ -47,5 +51,11 @@ describe('curated API response schemas', () => {
       disabledSchedules: [{ id: 'schedule_1', name: 'Weekly update' }],
       disabledEvents: [],
     }).success).toBe(true);
+  });
+
+  test('accepts a missing brand on reads but not on mutations', () => {
+    const missing = { organization, brandIdentity: null };
+    expect(brandIdentityResponseSchema.safeParse(missing).success).toBe(true);
+    expect(brandIdentityMutationResponseSchema.safeParse(missing).success).toBe(false);
   });
 });

@@ -1,7 +1,13 @@
 import { Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import { NOTRA_API_KEY_ENV_VAR, NOTRA_BASE_URL_ENV_VAR } from './constants/config';
-import { buildClient, resolveBearerToken, type NotraClient } from './lib/client';
+import { VERSION } from './constants/version';
+import {
+  buildClient,
+  MissingApiKeyError,
+  resolveBearerToken,
+  type NotraClient,
+} from './lib/client';
 import { getBaseUrl } from './lib/config';
 import { HttpClient } from './lib/http-client';
 import { ensureFreshAccessToken } from './lib/workos';
@@ -53,6 +59,11 @@ export abstract class NotraCommand extends Command {
   }
 
   protected geo(): HttpClient {
+    return this.authenticatedApi();
+  }
+
+  protected authenticatedApi(): HttpClient {
+    if (!resolveBearerToken(readGlobalArgv())) throw new MissingApiKeyError();
     return this.api();
   }
 
@@ -62,7 +73,7 @@ export abstract class NotraCommand extends Command {
       this._apiClient = new HttpClient({
         apiKey: resolveBearerToken(overrides),
         baseUrl: overrides.baseUrl ?? getBaseUrl(),
-        userAgent: `notra-cli/${process.env.npm_package_version ?? 'dev'}`,
+        userAgent: `notra-cli/${VERSION}`,
       });
     }
     return this._apiClient;

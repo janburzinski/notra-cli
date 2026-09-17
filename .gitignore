@@ -140,6 +140,7 @@ dist
 
 # local CLI test snapshots
 snapshot/
+report/
 
 # compiled CLI output (only the entry shebangs are tracked)
 dist/*

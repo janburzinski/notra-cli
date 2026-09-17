@@ -2,7 +2,7 @@ import { Args, Flags } from '@oclif/core';
 import { NotraCommand } from '../../base-command';
 import { OPENAPI_OPERATIONS } from '../../constants/openapi';
 import { ExitCode } from '../../constants/exit';
-import type { OpenApiOperation } from '../../types/api';
+import type { OpenApiOperation } from '../../types/openapi';
 import { readJsonFromFileOrStdin } from '../../utils/files';
 import { parseKeyValuePairs, toQueryRecord } from '../../utils/key-value';
 
