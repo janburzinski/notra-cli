@@ -115,10 +115,11 @@ function readGlobalArgv(): { json: boolean; apiKey?: string; baseUrl?: string } 
 }
 
 function extractFlag(argv: ReadonlyArray<string>, name: string): string | undefined {
+  let found: string | undefined;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === name) return argv[i + 1];
-    if (arg && arg.startsWith(`${name}=`)) return arg.slice(name.length + 1);
+    if (arg === name) found = argv[i + 1];
+    else if (arg && arg.startsWith(`${name}=`)) found = arg.slice(name.length + 1);
   }
-  return undefined;
+  return found;
 }
