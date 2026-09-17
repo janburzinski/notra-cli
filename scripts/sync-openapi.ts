@@ -30,14 +30,10 @@ const operations = Object.entries(document.paths)
                     name: parameter.name,
                     in: parameter.in,
                     required: parameter.required === true,
-                    ...(isRecord(parameter.schema)
-                      ? { schema: normalizeSchema(parameter.schema, document) }
-                      : {}),
                   },
                 ];
               })
             : [];
-          const bodySchema = readBodySchema(operation.requestBody, document);
           return [
             {
               id: operation.operationId,
@@ -54,7 +50,6 @@ const operations = Object.entries(document.paths)
                   : "",
               parameters,
               hasBody: operation.requestBody !== undefined,
-              ...(bodySchema ? { bodySchema } : {}),
             },
           ];
         })
@@ -75,82 +70,4 @@ console.log(`Wrote ${operations.length} operations to ${target.pathname}.`);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
-}
-
-function readBodySchema(
-  requestBody: unknown,
-  root: Record<string, unknown>,
-): unknown {
-  if (!isRecord(requestBody) || !isRecord(requestBody.content))
-    return undefined;
-  const media = requestBody.content["application/json"];
-  if (!isRecord(media) || !isRecord(media.schema)) return undefined;
-  return normalizeSchema(media.schema, root);
-}
-
-function normalizeSchema(
-  schema: Record<string, unknown>,
-  root: Record<string, unknown>,
-  seenRefs = new Set<string>(),
-): Record<string, unknown> {
-  if (typeof schema.$ref === "string") {
-    if (seenRefs.has(schema.$ref)) return {};
-    const resolved = resolveLocalRef(schema.$ref, root);
-    if (!resolved) return {};
-    return normalizeSchema(resolved, root, new Set([...seenRefs, schema.$ref]));
-  }
-  const normalized: Record<string, unknown> = {};
-  for (const key of [
-    "type",
-    "enum",
-    "required",
-    "minimum",
-    "maximum",
-    "minLength",
-    "maxLength",
-    "pattern",
-    "format",
-  ]) {
-    if (schema[key] !== undefined) normalized[key] = schema[key];
-  }
-  if (typeof schema.additionalProperties === "boolean") {
-    normalized.additionalProperties = schema.additionalProperties;
-  } else if (isRecord(schema.additionalProperties)) {
-    normalized.additionalProperties = normalizeSchema(
-      schema.additionalProperties,
-      root,
-      seenRefs,
-    );
-  }
-  if (isRecord(schema.properties)) {
-    normalized.properties = Object.fromEntries(
-      Object.entries(schema.properties).flatMap(([name, value]) =>
-        isRecord(value) ? [[name, normalizeSchema(value, root, seenRefs)]] : [],
-      ),
-    );
-  }
-  if (isRecord(schema.items))
-    normalized.items = normalizeSchema(schema.items, root, seenRefs);
-  for (const key of ["anyOf", "oneOf", "allOf"]) {
-    if (Array.isArray(schema[key])) {
-      normalized[key] = schema[key].flatMap((value) =>
-        isRecord(value) ? [normalizeSchema(value, root, seenRefs)] : [],
-      );
-    }
-  }
-  return normalized;
-}
-
-function resolveLocalRef(
-  ref: string,
-  root: Record<string, unknown>,
-): Record<string, unknown> | undefined {
-  if (!ref.startsWith("#/")) return undefined;
-  let current: unknown = root;
-  for (const encoded of ref.slice(2).split("/")) {
-    if (!isRecord(current)) return undefined;
-    const key = encoded.replace(/~1/g, "/").replace(/~0/g, "~");
-    current = current[key];
-  }
-  return isRecord(current) ? current : undefined;
 }

@@ -21,4 +21,3 @@ export type ApiClientOptions = {
   userAgent?: string;
 };
 export type ApiHttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-export type ApiResponse<Output> = { data: Output; headers: Headers };

@@ -1,6 +1,5 @@
 import { MissingApiKeyError } from '../lib/client';
 import { ApiConnectionError, ApiError } from '../lib/http-client';
-import { ToolResourceNotFoundError } from '../lib/tool-errors';
 import {
   DeviceAuthorizationError,
   SessionExpiredError,
@@ -38,10 +37,6 @@ export function toFriendlyError(err: unknown): FriendlyError {
       detail: String(err.cause ?? err.message),
       exitCode: ExitCode.Network,
     };
-  }
-
-  if (err instanceof ToolResourceNotFoundError) {
-    return { message: err.message, exitCode: ExitCode.NotFound };
   }
 
   if (err instanceof ApiResponseDecodeError) {

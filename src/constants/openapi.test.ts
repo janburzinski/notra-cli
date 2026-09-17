@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 import { OPENAPI_OPERATIONS } from './openapi';
-import { MCP_TOOLS } from './tools';
 
 describe('OpenAPI catalog', () => {
   test('contains unique, callable operations', () => {
@@ -11,12 +10,5 @@ describe('OpenAPI catalog', () => {
     expect(OPENAPI_OPERATIONS.find((operation) => operation.id === 'getPublicApiStatus')).toEqual(
       expect.objectContaining({ method: 'GET', path: '/v1/status' }),
     );
-  });
-
-  test('maps every MCP-compatible tool except the composite snapshot', () => {
-    expect(MCP_TOOLS.length).toBeGreaterThanOrEqual(80);
-    expect(MCP_TOOLS.filter((tool) => !tool.operation).map((tool) => tool.name)).toEqual([
-      'get_geo_snapshot',
-    ]);
   });
 });

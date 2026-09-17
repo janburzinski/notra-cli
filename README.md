@@ -68,33 +68,6 @@ Request bodies come from `--body-file`; use `-` to read JSON from stdin. The raw
 `api request` command remains available when an API deployment is newer than the
 catalog bundled with the installed CLI.
 
-## Agent and MCP parity
-
-The `tools` namespace mirrors the public Notra MCP tool names. It accepts the
-same flat JSON input shape, then routes path, query, and body fields using the
-bundled OpenAPI catalog:
-
-```bash
-notra tools list
-notra tools call list_posts --input '{"status":"draft","limit":10}'
-notra tools call get_post --input '{"postId":"post_123"}'
-echo '{"name":"writer"}' | notra tools call get_skill --input-file -
-```
-
-Use `--select` with `--raw` when an agent needs one value and no JSON envelope.
-This also covers Markdown without adding a lossy global Markdown renderer:
-
-```bash
-notra tools call get_post \
-  --input '{"postId":"post_123"}' \
-  --select post.markdown \
-  --raw
-```
-
-`create_geo_scan`, `run_geo_sequence`, and `plan_geo_content_brief` use AI
-credits and require `--yes`. The composite `get_geo_snapshot` tool remains MCP
-only; `notra tools list --json` reports that limitation explicitly.
-
 ## Output
 
 Commands default to formatted output in a terminal and JSON when stdout is

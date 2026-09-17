@@ -2,7 +2,6 @@ import type {
   ApiClientOptions,
   ApiHttpMethod,
   ApiRequestOptions,
-  ApiResponse,
   DecodedApiRequestOptions,
   QueryValue,
 } from '../types/http';
@@ -48,15 +47,6 @@ export class HttpClient {
     path: string,
     options: ApiRequestOptions & { decode?: (value: unknown) => unknown } = {},
   ): Promise<unknown> {
-    const response = await this.requestWithMetadata(method, path, options);
-    return options.decode ? options.decode(response.data) : response.data;
-  }
-
-  async requestWithMetadata(
-    method: ApiHttpMethod,
-    path: string,
-    options: ApiRequestOptions = {},
-  ): Promise<ApiResponse<unknown>> {
     const baseUrl = new URL(`${this.options.baseUrl.replace(/\/$/, '')}/`);
     const url = new URL(path.replace(/^\/+/, ''), baseUrl);
     if (url.origin !== baseUrl.origin) {
@@ -94,7 +84,7 @@ export class HttpClient {
         response.headers.get('retry-after') ?? undefined,
       );
     }
-    return { data: payload, headers: response.headers };
+    return options.decode ? options.decode(payload) : payload;
   }
 }
 
