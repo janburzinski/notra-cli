@@ -135,7 +135,7 @@ contains only `dist`.
 The parser infers required, optional, repeatable, enum, integer, and boolean
 types from each command definition. The shared HTTP client returns `unknown`
 unless a response decoder is supplied; curated commands use Zod response
-schemas, while generic `api` and `tools` calls deliberately pass unknown JSON
+schemas, while generic `api` calls deliberately pass unknown JSON
 through without pretending it has a compile-time type.
 
 Effect is intentionally not a runtime dependency. The API backend benefits from
