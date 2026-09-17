@@ -2,10 +2,10 @@
 import { Glob } from 'bun';
 import { rm } from 'node:fs/promises';
 
-const dist = new Glob('**/*');
-for await (const entry of dist.scan({ cwd: 'dist' })) {
-  await rm(`dist/${entry}`, { recursive: true, force: true });
-}
+// dist/ is fully generated, so wipe it wholesale. `force: true` keeps fresh
+// checkouts (where dist/ does not exist yet) from failing with ENOENT, and
+// Bun.build recreates the directory via `outdir`.
+await rm('dist', { recursive: true, force: true });
 
 const sources = new Glob('commands/**/*.ts');
 const entrypoints: string[] = [];

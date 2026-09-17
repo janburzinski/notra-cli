@@ -1,8 +1,10 @@
 import { Args, Flags } from '@oclif/core';
 import { NotraCommand } from '../../base-command';
+import { BILLABLE_OPERATION_IDS } from '../../constants/billing';
 import { OPENAPI_OPERATIONS } from '../../constants/openapi';
 import { ExitCode } from '../../constants/exit';
 import type { OpenApiOperation } from '../../types/openapi';
+import { confirmAction } from '../../utils/confirm';
 import { readJsonFromFileOrStdin } from '../../utils/files';
 import { parseKeyValuePairs, toQueryRecord } from '../../utils/key-value';
 
@@ -27,6 +29,7 @@ export default class ApiCall extends NotraCommand {
     }),
     'body-file': Flags.string({ description: 'JSON request body file, or "-" for stdin.' }),
     timeout: Flags.integer({ description: 'Request timeout in seconds.', min: 1, default: 30 }),
+    yes: Flags.boolean({ char: 'y', description: 'Confirm billable operations without prompting.' }),
   };
 
   public async run(): Promise<void> {
@@ -75,6 +78,14 @@ export default class ApiCall extends NotraCommand {
     const body = flags['body-file']
       ? await readJsonFromFileOrStdin(flags['body-file'], 'Expected a JSON request body.')
       : undefined;
+    if (BILLABLE_OPERATION_IDS.has(operation.id)) {
+      const confirmed = await confirmAction(`Run billable operation ${operation.id}?`, {
+        yes: flags.yes,
+      });
+      if (!confirmed) {
+        this.error('Confirmation required. Re-run with --yes.', { exit: ExitCode.Usage });
+      }
+    }
     const result = await this.api().request(operation.method, path, {
       query: toQueryRecord(query),
       headers,
