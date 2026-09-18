@@ -183,7 +183,12 @@ function printCommandHelp(name: string, command: typeof Command): void {
   }
   if (command.examples?.length) {
     console.log('\nExamples:');
-    for (const example of command.examples) console.log(`  ${example.replaceAll('<%= config.bin %>', 'notra')}`);
+    for (const example of command.examples) {
+      const rendered = example
+        .replaceAll('<%= config.bin %>', 'notra')
+        .replaceAll('<%= command.id %>', name);
+      console.log(`  ${rendered}`);
+    }
   }
 }
 

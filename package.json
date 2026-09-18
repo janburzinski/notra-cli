@@ -35,9 +35,7 @@
     "openapi:sync": "bun ./scripts/sync-openapi.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test src",
-    "prepack": "bun run build",
-    "snapshot:run": "bun ./snapshot/run.ts",
-    "snapshot:serve": "bun ./snapshot/serve.ts"
+    "prepack": "bun run build"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.2.1",

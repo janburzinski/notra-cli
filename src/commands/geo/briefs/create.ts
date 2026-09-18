@@ -45,7 +45,7 @@ export default class GeoBriefsCreate extends NotraCommand {
   public async run(): Promise<void> {
     const { args, flags } = await this.parse(GeoBriefsCreate);
     if (!flags['config-file'] && !flags.topic) {
-      this.error('--topic is required when --config-file is not used.');
+      this.error('--topic is required when --config-file is not used.', { exit: ExitCode.Usage });
     }
     const confirmed = await confirmAction('Research this billed GEO content brief?', {
       yes: flags.yes,
