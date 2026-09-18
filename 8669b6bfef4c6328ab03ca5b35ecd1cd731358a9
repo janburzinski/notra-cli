@@ -1,0 +1,29 @@
+.github/workflows/publish.yml
+  s_502a736e22f647::t_eff88abb911850 52,87
+package.json
+  s_ad21fa2c7c582a::t_841b0d7cf71960 30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "8669b6bfef4c6328ab03ca5b35ecd1cd731358a9",
+  "prompts": {},
+  "sessions": {
+    "s_502a736e22f647": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034QME2dQ60g8Ex9GvgyFW",
+        "model": "unknown"
+      },
+      "human_author": "Jan Burzinski <156842394+janburzinski@users.noreply.github.com>"
+    },
+    "s_ad21fa2c7c582a": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034QMEChI6PbstPGxWyZRH",
+        "model": "unknown"
+      },
+      "human_author": "Jan Burzinski <156842394+janburzinski@users.noreply.github.com>"
+    }
+  }
+}

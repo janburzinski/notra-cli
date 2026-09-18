@@ -1,0 +1,19 @@
+src/base-command.ts
+  s_dc327cb8546b51::t_c89c8f6c9c7066 118,121-122,124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "2510b911ec3f444107fb0c6939907aa6c799a2ca",
+  "prompts": {},
+  "sessions": {
+    "s_dc327cb8546b51": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034QM8ua4RFH4TwXcwk3fT",
+        "model": "unknown"
+      },
+      "human_author": "Jan Burzinski <156842394+janburzinski@users.noreply.github.com>"
+    }
+  }
+}
