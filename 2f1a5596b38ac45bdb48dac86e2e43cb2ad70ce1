@@ -1,0 +1,39 @@
+src/run.ts
+  s_393a0558feeb0f::t_9fc872eb38a09e 186-191
+src/commands/geo/briefs/create.ts
+  s_6787396a1c20b5::t_a4777daad788f6 48
+package.json
+  s_21835039f8b275::t_adb7dcb3733d70 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "2f1a5596b38ac45bdb48dac86e2e43cb2ad70ce1",
+  "prompts": {},
+  "sessions": {
+    "s_21835039f8b275": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034QmHgYZfaBuIfDaHhA7m",
+        "model": "unknown"
+      },
+      "human_author": "Jan Burzinski <156842394+janburzinski@users.noreply.github.com>"
+    },
+    "s_393a0558feeb0f": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034QmHYi3HT4wMiOO0fQ6l",
+        "model": "unknown"
+      },
+      "human_author": "Jan Burzinski <156842394+janburzinski@users.noreply.github.com>"
+    },
+    "s_6787396a1c20b5": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034QmHdDEacZpfrNF32MiZ",
+        "model": "unknown"
+      },
+      "human_author": "Jan Burzinski <156842394+janburzinski@users.noreply.github.com>"
+    }
+  }
+}
